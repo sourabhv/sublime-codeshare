@@ -1,0 +1,7 @@
+[
+    {
+        "caption": "CodeShare: Paste on dpaste.de",
+        "command": "code_share_dpaste",
+        "args": {}
+    }
+]
