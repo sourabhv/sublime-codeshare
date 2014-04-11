@@ -2,6 +2,8 @@ import urllib
 
 import sublime, sublime_plugin
 
+def dpaste_lexer_mapper(lexer):
+    pass
 
 def dpaste(code, lexer):
     dpasteUrl = 'http://dpaste.de/api/'
@@ -16,7 +18,15 @@ def dpaste(code, lexer):
 
 class CodeShareDpasteCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        code = self.view.substr(sublime.Region(0, self.view.size()))
+        selections = [selection for selection in self.view.sel() if not selection.empty()]
+
+        if len(selections) == 0:
+            code = self.view.substr(sublime.Region(0, self.view.size()))
+        else:
+            code_blocks = [self.view.substr(selection) for selection in selections]
+            separator = '\n\n' + '-'*80 + '\n\n'
+            code = separator.join(code_blocks)
+
         lexer = self.view.settings().get('syntax').split('/')[2].split('.')[0]
 
         dpaste_url = dpaste(code, lexer)
