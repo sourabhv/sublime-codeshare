@@ -13,8 +13,11 @@ def dpaste(code, lexer):
         # 'lexer': lexer
     }).encode('utf8')
 
-    response = urllib.request.urlopen( dpasteUrl, data )
-    return response.read()[1:-1].decode('utf8')
+    try:
+        response = urllib.request.urlopen( dpasteUrl, data )
+        return response.read()[1:-1].decode('utf8')
+    except:
+        return None
 
 class CodeShareDpasteCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -31,7 +34,10 @@ class CodeShareDpasteCommand(sublime_plugin.TextCommand):
 
         dpaste_url = dpaste(code, lexer)
 
-        sublime.set_clipboard(dpaste_url)
-        sublime.status_message('dpaste url ready to be pasted!')
+        if dpaste_url:
+            sublime.set_clipboard(dpaste_url)
+            sublime.status_message('dpaste url ready to be pasted!')
+        else:
+            sublime.status_message('Something went wrong!')
 
         return
