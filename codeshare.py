@@ -1,41 +1,36 @@
+import os
 import urllib
 
 import sublime, sublime_plugin
 
-def dpaste_lexer_mapper(lexer):
-    pass
+class CodeShareCommand(sublime_plugin.TextCommand):
 
-def dpaste(code, lexer):
-    dpasteUrl = 'http://dpaste.de/api/'
-
-    data = urllib.parse.urlencode({
-        'content': code,
-        # 'lexer': lexer
-    }).encode('utf8')
-
-    try:
-        response = urllib.request.urlopen( dpasteUrl, data )
-        return response.read()[1:-1].decode('utf8')
-    except:
-        return None
-
-class CodeShareDpasteCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        selections = [selection for selection in self.view.sel() if not selection.empty()]
-
-        if len(selections) == 0:
+    def getCode(self):
+        sep = '\n\n# ' + '='*77 + '\n\n'
+        code = sep.join( [self.view.substr(selection) for selection in self.view.sel() if not selection.empty()] )
+        if not code:
             code = self.view.substr(sublime.Region(0, self.view.size()))
-        else:
-            code_blocks = [self.view.substr(selection) for selection in selections]
-            separator = '\n\n' + '-'*80 + '\n\n'
-            code = separator.join(code_blocks)
+        return code
 
-        lexer = self.view.settings().get('syntax').split('/')[2].split('.')[0]
+    def pasteCode(self, URL, requestData):
+        data = urllib.parse.urlencode(requestData).encode('utf8')
+        response = urllib.request.urlopen( URL, data )
+        return response
 
-        dpaste_url = dpaste(code, lexer)
+    def parseUrl(self, response):
+        return response.read().decode('utf8')[1:-1]
 
-        if dpaste_url:
-            sublime.set_clipboard(dpaste_url)
+class CodeShareDpastedeCommand(CodeShareCommand):
+
+    def run(self, edit):
+        pasteApiUrl = 'http://dpaste.de/api/'
+        code = self.getCode()
+        requestData = { 'content': code }
+        HttpResponse = self.pasteCode(pasteApiUrl, requestData)
+        paste_url = self.parseUrl(HttpResponse)
+
+        if paste_url:
+            sublime.set_clipboard(paste_url)
             sublime.status_message('dpaste url ready to be pasted!')
         else:
             sublime.status_message('Something went wrong!')
